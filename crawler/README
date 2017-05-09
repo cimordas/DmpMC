@@ -1,0 +1,38 @@
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~ HOW TO CRAWL ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~ Crawling
+
+1. Establish the list of .root files
+2. Run crawl_filelist.sh  (code on Stephan's Github) on that list
+	> export CRAWLER_ROOT=$(pwd)			if crawler.py and analyze.py are in the same folder
+	> touch badFiles.txt
+	> bash crawl_filelist.sh filelist.txt badFiles.txt
+3. Run that on a screen!
+	New screen:  	> screen -S name
+	Detach screen:	> Ctrl A D
+	Reattach:	> screen -x name
+
+4. After a long while, badFiles.txt will have the list of faulty files
+
+~~ Monitoring
+
+	> bash monitor_all.sh *folder_where_filelist_and_output_are*
+	
+	Don't run too often. You can see sometimes the number of files decreasing, it's because the file is being written
+
+~~ Analysing
+
+1. Establish list of .json files produced by the crawler
+
+	> mkdir out_ana
+	> python myana.py *listofjson*.txt
+
+2. Output produced in out_ana and displayed on screen
+
+~~ Comparing with other files
+
+Faulty files can potentially be recovered from Geneva XRootD or from Italy XRootD
+Refer to README_ITA

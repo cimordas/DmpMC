@@ -1,0 +1,23 @@
+How to cross-check:
+
+1. Establish available datasets on XRootD (Geneva, Italy):
+	gva prefix: root://grid05.unige.ch:1094/
+	ita prefix: root://xrootd-dampe.cloud.ba.infn.it/
+
+	Establish filelist using
+		> xrdfs *prefix* ls *folder-where-files-are-stored* 
+
+	Write as sets_gva.txt, sets_ita.txt 
+
+2. For all datasets, establish list of available files
+	Something like:
+		> for f in $(cat sets_gva.txt); do xrdfs ** ls $f ; done
+	Write as files_gva.txt, files_ita.txt
+
+3. Take the list of bad files as produced by crawler and add as badFiles.txt
+
+4. Run "find.py". Will write "found_gva.txt", "found_ita.txt" as files located on XRootD that are potential back-ups
+
+5. Run "addPrefix.py" on both found_gva.txt, found_ita.txt
+
+6. Move to "crawl" subfolder and crawl over xrd_ita.txt, xrd_gva.txt
