@@ -1,6 +1,6 @@
 '''
 
-Merger v0.1.1
+Merger v0.1.2
 
 How to run:
 > python merger.py files.txt reductionfactor
@@ -45,13 +45,11 @@ class Merger(object):
 	Initialise with the list of files to be merged, and the reduction factor (i.e. how many files to merge into a single one)
 	'''
 	
-	def __init__(self, textfile, reductionfactor, debug=False, progress=True):
+	def __init__(self, textfile, reductionfactor, progress=True):
 		
 		self.t0 = time()
 		self.progress = progress
 		self.debug = debug 
-		if self.debug:
-			print "Merger initialisation"
 		
 		self.mergedfiles = []
 		self.notmerged = []
@@ -120,8 +118,6 @@ class Merger(object):
 		self.nroffiles = len(self.basefiles)
 		self.nrofsteps = self.nroffiles / self.rf
 		
-		if self.debug:
-			print "Starting run. Number of output files: ", str(self.nroffiles / self.rf)
 		loop = xrange(self.nrofsteps)
 		if self.progress: loop = tqdm(loop)
 		for i in loop:
@@ -133,12 +129,17 @@ class Merger(object):
 			for k in xrange(self.rf):
 				self.chunk.append( self.tomerge.pop(0) )
 			
-			self.merge( self.chunk , i+1 )
+			while True:
+				try:
+					self.merge( self.chunk , i+1 )
+					break
+				except ReferenceError:
+					pass
+				except:
+					raise
+					
 			self.mergedfiles = self.mergedfiles + self.chunk
 			self.save()
-			
-			if self.debug:
-				print "Iteration ", str(i), ". Current run time: ", str(strftime('%H:%M:%S', gmtime( self.getRunTime() )))
 		
 		self.notmerged = deepcopy(self.tomerge)
 		
@@ -149,7 +150,6 @@ class Merger(object):
 		Takes a python list "filelist" as argument, merges all the root files from that list
 		into an output root file, whose name is decided by "i"
 		'''
-		
 		# String manipulation to build output name
 		outfile = 'merger_out' + self.subdir + '/'
 		if 'reco' in filelist[0]:
