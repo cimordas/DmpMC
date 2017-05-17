@@ -6,6 +6,8 @@
 ~~ Crawling
 
 1. Establish the list of .root files
+	ls *path*     OR
+	xrdfs xrootd-dampe.cloud.ba.infn.it ls /MC/*path*
 2. Run crawl_filelist.sh  (code on Stephan's Github) on that list
 	> export CRAWLER_ROOT=$(pwd)			if crawler.py and analyze.py are in the same folder
 	> touch badFiles.txt
@@ -27,10 +29,9 @@
 
 1. Establish list of .json files produced by the crawler
 
-	> mkdir out_ana
-	> python myana.py *listofjson*.txt
+	> python errorcodes.py *listofjson*.txt		or for a single json file:  python errorcodes.py *file*.json
 
-2. Output produced in out_ana and displayed on screen
+2. Output produced in ./outputs/ and displayed on screen
 
 ~~ Comparing with other files
 

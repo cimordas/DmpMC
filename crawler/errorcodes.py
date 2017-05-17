@@ -1,6 +1,20 @@
 '''
 
-Explores output of crawler and looks for the kind of errors
+To run after the crawler. Either 
+	> python errorcodes.py listofjsonfiles.txt
+	or
+	> python errorcodes.py file.json
+
+Script will browse the json file(s) and make filelists based on error code. Also includes good files.
+Output under  ./outputs/*dataset*/
+
+Error codes:
+0 : No error, file is good
+1001 : Missing branches
+1002 : House-Keeping tree is missing in flight data
+1003 : Bad particle
+1004 : Zero events - file is readable
+2000 : Cannot access file / cannot read file
 
 '''
 
@@ -14,28 +28,21 @@ def json_load_byteified(file_handle):
         json.load(file_handle, object_hook=_byteify),
         ignore_dicts=True
     )
-
 def json_loads_byteified(json_text):
     return _byteify(
         json.loads(json_text, object_hook=_byteify),
         ignore_dicts=True
     )
-
 def _byteify(data, ignore_dicts = False):
-    # if this is a unicode string, return its string representation
     if isinstance(data, unicode):
         return data.encode('utf-8')
-    # if this is a list of values, return list of byteified values
     if isinstance(data, list):
         return [ _byteify(item, ignore_dicts=True) for item in data ]
-    # if this is a dictionary, return dictionary of byteified keys and values
-    # but only if we haven't already byteified it
     if isinstance(data, dict) and not ignore_dicts:
         return {
             _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
             for key, value in data.iteritems()
         }
-    # if it's anything else, return it in its original form
     return data
 
 
