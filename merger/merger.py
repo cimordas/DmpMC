@@ -45,13 +45,14 @@ class Merger(object):
 	Initialise with the list of files to be merged, and the reduction factor (i.e. how many files to merge into a single one)
 	'''
 	
-	def __init__(self, textfile, reductionfactor, progress=True, checkPart=True):
+	def __init__(self, textfile, reductionfactor, progress=True, checkPart=True, rld=True):
 		
 		self.t0 = time()
 		self.progress = progress
 		self.debug = debug 
 		
 		self.checkPart = checkPart
+		self.rld = rld
 		
 		self.mergedfiles = []
 		self.notmerged = []
@@ -87,58 +88,51 @@ class Merger(object):
 		'''
 		test if the particle ID is good. Adapted from Stephan's work on the crawler
 		'''
-        bn = basename(fname).split(".")[0].split("-")[0]
-        if (not bn.startswith("all")) or (("bkg" or "background" or "back") in bn.lower()):
-            return True
-        else:
-            try:
-                tree = mcprimaries = None
-                tree = TChain("CollectionTree")
-                tree.Add(fname)
-                tree.SetBranchStatus("DmpEvtSimuPrimaries",1)
-                branch = tree.GetBranch("DmpEvtSimuPrimaries")
-                mcprimaries = DmpEvtSimuPrimaries()
-                tree.SetBranchAddress("DmpEvtSimuPrimaries", mcprimaries)
-                branch.GetEntry(0)
-                tree.GetEntry(0)
-                entry = tree.GetEntry(0)
-                pdg_id = int(mcprimaries.pvpart_pdg)
-                if pdg_id > 10000:
-                    pdg_id = int(pdg_id/10000.) - 100000
-                pdgs = dict(Proton=2212, Electron=11, Muon=13, Gamma=22,He = 2, Li = 3, Be = 4, B = 5, C = 6, N = 7, O = 8)
-                particle = bn.replace("all","")
-                if "flat" in particle:
-                    particle = bn.replace("flat","")
-                assert particle in pdgs.keys(), "particle type not supported"
-                if pdgs[particle] != pdg_id:
-                    msg = "wrong PDG ID! particle_found={part_found} ({PID}); particle_expected={part_exp} ({particle})".format(part_exp=int(pdgs[particle]),
-                                                                                                          part_found=int(pdg_id),particle=particle,
-                                                                                                          PID=dict(zip(pdgs.values(),pdgs.keys()))[pdg_id])
-                    raise ValueError(msg)
-            except Exception as err:
-                del tree, mcprimaries
-                error_code = 1003
-                #~ raise Exception(err.message)
-                return False
+		bn = basename(fname).split(".")[0].split("-")[0]
+		if (not bn.startswith("all")) or (("bkg" or "background" or "back") in bn.lower()):
+			return True
+		else:
+			try:
+				tree = mcprimaries = None
+				tree = TChain("CollectionTree")
+				tree.Add(fname)
+				tree.SetBranchStatus("DmpEvtSimuPrimaries",1)
+				branch = tree.GetBranch("DmpEvtSimuPrimaries")
+				mcprimaries = DmpEvtSimuPrimaries()
+				tree.SetBranchAddress("DmpEvtSimuPrimaries", mcprimaries)
+				branch.GetEntry(0)
+				tree.GetEntry(0)
+				entry = tree.GetEntry(0)
+				pdg_id = int(mcprimaries.pvpart_pdg)
+				if pdg_id > 10000:
+					pdg_id = int(pdg_id/10000.) - 100000
+				pdgs = dict(Proton=2212, Electron=11, Muon=13, Gamma=22,He = 2, Li = 3, Be = 4, B = 5, C = 6, N = 7, O = 8)
+				particle = bn.replace("all","")
+				if "flat" in particle:
+					particle = bn.replace("flat","")
+				assert particle in pdgs.keys(), "particle type not supported"
+				if pdgs[particle] != pdg_id:
+					msg = "wrong PDG ID! particle_found={part_found} ({PID}); particle_expected={part_exp} ({particle})".format(part_exp=int(pdgs[particle]),
+																										  part_found=int(pdg_id),particle=particle,
+																										  PID=dict(zip(pdgs.values(),pdgs.keys()))[pdg_id])
+					raise ValueError(msg)
+			except Exception as err:
+				del tree, mcprimaries
+				#~ raise Exception(err.message)
+				return False
 
-            return True
+			return True
 		
 	def save(self):
 		'''
 		Saves current status on disk to be able to run it later
 		'''
 		with open(self.configfile,'w') as f:
-			pickle.dump( [self.basefiles, self.tomerge, self.mergedfiles, self.notmerged ]  , f)
+			pickle.dump( self  , f)
 		
-	def load(self):
-		'''
-		Load status from disk 
-		'''
-		with open(self.configfile,'r') as f:
-			a = pickle.load(f)
-		self.tomerge = a[0]
-		self.mergedfiles = a[1]
-		self.notmerged = a[2]
+	def unpickle(fname):
+		with open(fname,'r') as f:
+			return pickle.load(fname)
 		
 	def write(self):
 		'''
@@ -292,7 +286,20 @@ class Merger(object):
 
 if __name__ == '__main__' :
 	
-	a = Merger(argv[1],argv[2])
-	a.run()
+	with open(sys.argv[1],'r') as g:
+		for line in g:
+			configfile = line.replace('\n','')
+			break
+	configfile = basename(configfile)
+	temp_int = configfile.find('.')				
+	subdir = '/' + configfile[0:temp_int]
+	configfile = 'merger_data' + subdir + '/self.pick'
+	
+	if isfile(configfile):
+		a = Merger.unpickle(configfile)
+		a.run()
+	else:
+		a = Merger(argv[1],argv[2])
+		a.run()
 	
 	print 'Run time: ', str(strftime('%H:%M:%S', gmtime( a.getRunTime() )))
