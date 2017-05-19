@@ -1,6 +1,6 @@
 '''
 
-Merger v0.1.2
+Merger v0.2.0
 
 How to run:
 > python merger.py files.txt reductionfactor
@@ -16,10 +16,12 @@ Files output:
         ./merger_data/*dataset*/  contains:
                                         - notmerged.txt : a text file containing the list of files that have not been merged (end of chunk). Empty if everything has been merged.
                                         - merged.yaml :  a dictionary which maps new files to old files
+                                        - fmerged.txt : list of files that got merged
 
 Other features:
     The script checks for existence of output files, and does not run on files that already exist. So it can resume where it stopped
-
+	Checks the input files to look for bad PDG ID. Can be disabled to gain computation time
+	Can be called with a custom file number index
 
 '''
 
@@ -45,7 +47,7 @@ class Merger(object):
 	Initialise with the list of files to be merged, and the reduction factor (i.e. how many files to merge into a single one)
 	'''
 	
-	def __init__(self, textfile, reductionfactor, progress=True, checkPart=True, rld=True):
+	def __init__(self, textfile, reductionfactor, progress=True, checkPart=True, rld=True, i=0):
 		
 		self.t0 = time()
 		self.progress = progress
@@ -54,11 +56,15 @@ class Merger(object):
 		self.checkPart = checkPart
 		self.rld = rld
 		
+		self.index = i
+		
 		self.mergedfiles = []
 		self.notmerged = []
 		self.rf = int(reductionfactor)
 		self.tomerge = [f.replace("\n","") for f in open(textfile,'r').readlines()]
 		self.basefiles = deepcopy(self.tomerge)
+		self.nroffiles = len(self.basefiles)
+		self.nrofsteps = self.nroffiles / self.rf
 		
 		self.equivalence = {}
 		self.badPDGId = []
@@ -145,16 +151,17 @@ class Merger(object):
 		with open(self.notmergedfile,'w') as g:
 			for item in self.notmerged:
 				g.write(item + '\n')
+		self.mergedlist = 'merger_data' + self.subdir + '/mfiles.txt'
+		with open(self.mergedlist,'w') as h:
+			for item in self.mergedfiles:
+				h.write(item + '\n')
 		
 	def run(self):
 		'''
 		Splits filelist into chunks and run merge() on each chunk. Calls save() at each iteration
 		and write() at the end
 		'''
-					
-		self.nroffiles = len(self.basefiles)
-		self.nrofsteps = self.nroffiles / self.rf
-		
+
 		loop = xrange(self.nrofsteps)
 		if self.progress: loop = tqdm(loop)
 		for i in loop:
@@ -168,17 +175,18 @@ class Merger(object):
 			
 			while True:
 				try:
-					self.merge( self.chunk , i+1 )
+					self.merge( self.chunk , self.index )
+					self.index = self.index + 1
 					break
-				except ReferenceError:
-					pass
+				except ReferenceError:				# File cannot be accessed over Xrootd because reasons. Raises a ReferenceError due to null-pointer
+					pass							# Since error is temporary, we ignore it.
 				except:
 					raise
 					
 			self.mergedfiles = self.mergedfiles + self.chunk
 			self.save()
 		
-		self.notmerged = deepcopy(self.tomerge)
+		self.notmerged = deepcopy(self.tomerge)		# Files left over.
 		
 		self.write()
 		
