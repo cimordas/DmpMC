@@ -111,7 +111,7 @@ def _ana(filename,boolwrite=False):
 if __name__ == '__main__':
 	
 	if ".json" in sys.argv[1]:		# Only one json file provided
-		filecount, filesize = _ana(sys.argv[1],boolwrite=False)
+		filecount, filesize = _ana(sys.argv[1],boolwrite=True)
 		
 	else:							# ASCII list of json files provided
 		inputlist = []
