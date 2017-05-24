@@ -15,6 +15,8 @@ Error codes:
 1003 : Bad particle
 1004 : Zero events - file is readable
 2000 : Cannot access file / cannot read file
+1005 : Events outside of energy range
+3000 : C++ internal error
 
 '''
 
