@@ -25,7 +25,7 @@ def openRootFile(efilelist):
 	return chain
 	
 	
-def analysis(files,pid,nr):
+def analysis(files,nr):
 	'''
 	Select good events from a filelist and saves them as a numpy array
 	'''
@@ -64,9 +64,9 @@ if __name__ == "__main__" :
 		for k in xrange(chunksize):
 			chunk.append( filelist.pop(0) )
 		
-		true_energies = true_energies + analysis(chunk,particle,i)
+		true_energies = true_energies + analysis(chunk,i)
 		
-	true_energies = true_energies + analysis(filelist,particle,nrofchunks)
+	true_energies = true_energies + analysis(filelist,nrofchunks)
 	
 	with open('true_energies.pick','w') as f:
 		pickle.dump(true_energies,f)
