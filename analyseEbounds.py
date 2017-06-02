@@ -24,8 +24,11 @@ if __name__ == "__main__" :
 		for lines in f:
 			filelist.append(lines.replace('\n',''))
 	
-	mins = []
-	maxs = []
+	
+	c = ROOT.TCanvas("MyTitle","MyTitle",1000,1000)
+	
+	histoMax = ROOT.TH1F("MaxEne","MaxEne",10,1000,100000000)  # See for logarithmic binning
+	#~ histoMin = ROOT.TH1F("MinEne","MinEne",10,1000,100000000)
 	
 	for f in filelist:
 		fo = ROOT.TFile.Open(f)
@@ -33,13 +36,11 @@ if __name__ == "__main__" :
 		simuheader = ROOT.DmpRunSimuHeader()
 		rmt.SetBranchAddress("DmpRunSimuHeader",simuheader)
 		rmt.GetEntry(0)
-		maxEne = simuheader.GetMaxEne()
-		minEne = simuheader.GetMinEne()
+		
+		histoMax.Fill( simuheader.GetMaxEne() )
+		#~ histoMin.Fill( simuheader.GetMinEne() )
+		
 		fo.Close()
-		mins.append(minEne)
-		maxs.append(maxEne)
-	
-	with open('E_bounds.pick','w') as f:
-		pickle.dump([mins,maxs,filelist],f)
-	
-	print 'Run time: ', str(time.strftime('%H:%M:%S', time.gmtime( time.time() - t0 )))
+		
+	histoMax.Draw()
+	c.SaveAs("MyHisto.png")
