@@ -26,21 +26,15 @@ if __name__ == "__main__" :
 	
 	
 	c = ROOT.TCanvas("MyTitle","MyTitle",1000,1000)
-	
-	histoMax = ROOT.TH1F("MaxEne","MaxEne",10,1000,100000000)  # See for logarithmic binning
-	#~ histoMin = ROOT.TH1F("MinEne","MinEne",10,1000,100000000)
-	
+
+	ch = ROOT.TChain("RunMetadataTree")
 	for f in filelist:
-		fo = ROOT.TFile.Open(f)
-		rmt = fo.Get("RunMetadataTree")
-		simuheader = ROOT.DmpRunSimuHeader()
-		rmt.SetBranchAddress("DmpRunSimuHeader",simuheader)
-		rmt.GetEntry(0)
+		ch.Add(f)
 		
-		histoMax.Fill( simuheader.GetMaxEne() )
-		#~ histoMin.Fill( simuheader.GetMinEne() )
+	nentries = ch.GetEntries()
+	h1 = ROOT.TH1D("h1","hEnergy",10,ROOT.TMath.Log10(10000),ROOT.TMath.Log10(100000000))
+	ch.Project("h1","TMath::Log10(DmpRunSimuHeader.fMaxEne)")
+	
 		
-		fo.Close()
-		
-	histoMax.Draw()
+	h1.Draw()
 	c.SaveAs("MyHisto.png")
